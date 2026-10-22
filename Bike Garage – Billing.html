@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bike Garage – Billing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{--bg:#e9edef;--paper:#fff;--ink:#14202b;--mute:#5a6874;--line:#cfd6db;--brand:#0f5c4a;--brand-ink:#fff;--hi:#f5b700;--hi-ink:#14202b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e151b;--paper:#17212a;--ink:#eef2f4;--mute:#9aa8b3;--line:#2c3a46;--brand:#2fa386;--brand-ink:#06251d}}
+:root[data-theme="dark"]{--bg:#0e151b;--paper:#17212a;--ink:#eef2f4;--mute:#9aa8b3;--line:#2c3a46;--brand:#2fa386;--brand-ink:#06251d}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Barlow,system-ui,sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:16px}
+.bill{background:var(--paper);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.head{background:var(--brand);color:var(--brand-ink);padding:22px 24px 18px}
+.head h1{margin:0;font:800 clamp(44px,10vw,76px)/.95 "Barlow Condensed",Impact,sans-serif;letter-spacing:.01em}
+.head .shop{margin:8px 0 2px;font:600 22px "Barlow Condensed",Impact,sans-serif;letter-spacing:.04em}
+.head p{margin:0;font-size:15px;opacity:.92;max-width:60ch}
+.head .ph{display:inline-block;margin-top:10px;background:var(--hi);color:var(--hi-ink);font-weight:600;padding:4px 12px;border-radius:3px;text-decoration:none}
+.promo{background:var(--hi);color:var(--hi-ink);padding:10px 24px;font-weight:600;border-bottom:3px dashed var(--ink)}
+.body{padding:20px 24px}
+.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:18px}
+label{display:block;font-size:13px;color:var(--mute);margin-bottom:3px}
+input{width:100%;font:inherit;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:4px;padding:8px 10px;min-height:40px}
+input:focus-visible,button:focus-visible{outline:3px solid var(--hi);outline-offset:1px}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:560px}
+th{text-align:left;font-size:13px;color:var(--mute);font-weight:600;padding:6px 6px;border-bottom:2px solid var(--ink)}
+td{padding:6px;border-bottom:1px solid var(--line);vertical-align:middle}
+td.amt{text-align:right;font-weight:600;white-space:nowrap}
+th.r{text-align:right}
+.q{width:70px}.rt{width:110px}
+button{font:600 15px Barlow,sans-serif;border:0;border-radius:4px;padding:10px 16px;min-height:40px;cursor:pointer;background:var(--brand);color:var(--brand-ink)}
+button.alt{background:transparent;color:var(--ink);border:1px solid var(--line)}
+button.x{background:transparent;color:var(--mute);padding:4px 10px;min-height:32px;font-size:20px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}
+.tot{margin-left:auto;width:min(100%,300px)}
+.tot div{display:flex;justify-content:space-between;align-items:center;padding:5px 0}
+.tot .disc input{width:80px;text-align:right}
+.tot .grand{border-top:2px solid var(--ink);margin-top:6px;padding-top:10px;font:800 32px "Barlow Condensed",Impact,sans-serif}
+.foot{text-align:center;color:var(--mute);font-size:14px;padding:14px 24px 20px;border-top:1px solid var(--line)}
+.ready{margin-top:18px;padding:14px 16px;border:2px solid var(--brand);border-radius:6px}
+.ready .bar{margin:10px 0 4px}
+#msg{font-size:14px;color:var(--mute);min-height:20px}
+#lock input{margin:6px 0;max-width:320px}
+.st{display:flex;flex-wrap:wrap;gap:16px;margin:12px 0;font-weight:600}
+.adm td,.adm th{font-size:14px}.adm button{min-height:34px;padding:4px 10px;margin-right:4px}
+.foot a{color:var(--mute)}
+@media print{body{background:#fff}.wrap{padding:0}.bill{border:0}.bar,.x,.nop{display:none!important}input{border:0;padding:0}.head,.promo{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div id="lock" class="ready nop" hidden><strong id="ltitle">Enter password</strong><div><input id="lpw" type="password" placeholder="Password" autocomplete="current-password" aria-label="Password"></div><div><input id="lpw2" type="password" placeholder="Repeat password" autocomplete="new-password" aria-label="Repeat password" hidden></div><button id="lbtn">Unlock</button><div id="lmsg" role="status" style="font-size:14px;color:var(--mute);margin-top:6px"></div></div>
+<main class="bill" id="bm">
+  <header class="head">
+    <h1>Bike Garage</h1>
+    <div class="shop">BEERU BIKE POINT</div>
+    <p>Gaute Wadi, Kachchi Road, Near Power House, Back Gate, Digha, Navi Mumbai 400708</p>
+    <a class="ph" href="tel:1234567890">Call 1234567890</a>
+  </header>
+  <div class="promo" contenteditable="true" spellcheck="false" aria-label="Promotion (click to edit)">Bike Garage offer: bring your bike for a full service and get a free wash. Ask at the counter.</div>
+  <section class="body">
+    <div class="meta">
+      <div><label for="cn">Customer name</label><input id="cn"></div>
+      <div><label for="cp">Customer phone</label><input id="cp" type="tel" inputmode="tel"></div>
+      <div><label for="bike">Bike / number plate</label><input id="bike"></div>
+      <div><label for="bn">Bill no.</label><input id="bn" value="001"></div>
+      <div><label for="dt">Date</label><input id="dt" type="date"></div>
+    </div>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Item / service</th><th>Qty</th><th>Rate (₹)</th><th class="r">Amount (₹)</th><th class="nop"><span class="sr" hidden>Remove</span></th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="bar"><button id="add">Add item</button><button class="alt" id="print">Print bill (PDF)</button><button class="alt" id="clear">New bill</button></div>
+    <div class="tot">
+      <div><span>Subtotal</span><span id="sub">₹0.00</span></div>
+      <div class="disc"><label for="ds" style="margin:0">Discount (₹)</label><input id="ds" type="number" min="0" value="0" inputmode="decimal"></div>
+      <div class="grand"><span>Total</span><span id="gt">₹0.00</span></div>
+    </div>
+    <div id="ready" class="ready nop" hidden><strong>Your bill PDF is ready.</strong><div class="bar"><button id="dl">Download PDF</button><button class="alt" id="sh">Share</button></div><div id="msg" role="status"></div></div>
+  </section>
+  <footer class="foot">Thank you for choosing Bike Garage. Ride safe! <a href="#admin" id="toadmin" class="nop">Admin</a></footer>
+</main>
+<section id="adm" class="bill" hidden>
+  <header class="head"><h1>Bike Garage</h1><div class="shop">ADMIN: SAVED BILLS</div></header>
+  <div class="body">
+    <div class="bar"><input id="aq" placeholder="Search name, phone, bike or bill no." aria-label="Search bills" style="flex:1;min-width:200px"><button class="alt" id="csv">Export CSV</button><button class="alt" id="back">Back to billing</button><button class="alt" id="relock">Lock</button></div>
+    <div class="st"><span id="acount">0 bills</span><span id="atotal">₹0.00</span></div>
+    <div id="astat" role="status" style="color:var(--mute)"></div>
+    <div class="tw"><table class="adm"><thead><tr><th>Date</th><th>Bill</th><th>Customer</th><th>Bike</th><th class="r">Total</th><th></th></tr></thead><tbody id="alist"></tbody></table></div>
+  </div>
+</section>
+</div>
+<script>
+const rows=document.getElementById('rows'),fmt=n=>'₹'+n.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+function addRow(){
+  const tr=document.createElement('tr');
+  tr.innerHTML='<td><input class="n" aria-label="Item"></td><td><input class="q" type="number" min="0" value="1" inputmode="decimal" aria-label="Quantity"></td><td><input class="rt" type="number" min="0" value="" inputmode="decimal" aria-label="Rate"></td><td class="amt">₹0.00</td><td class="nop"><button class="x" aria-label="Remove item">×</button></td>';
+  rows.appendChild(tr);calc();
+}
+function calc(){
+  let s=0;
+  rows.querySelectorAll('tr').forEach(tr=>{
+    const a=(parseFloat(tr.querySelector('.q').value)||0)*(parseFloat(tr.querySelector('.rt').value)||0);
+    tr.querySelector('.amt').textContent=fmt(a);s+=a;
+  });
+  const d=Math.min(parseFloat(document.getElementById('ds').value)||0,s);
+  document.getElementById('sub').textContent=fmt(s);
+  document.getElementById('gt').textContent=fmt(s-d);
+}
+rows.addEventListener('input',calc);
+rows.addEventListener('click',e=>{if(e.target.classList.contains('x')){e.target.closest('tr').remove();if(!rows.children.length)addRow();calc();}});
+document.getElementById('ds').addEventListener('input',calc);
+document.getElementById('add').onclick=()=>{addRow();rows.lastChild.querySelector('.n').focus();};
+document.getElementById('clear').onclick=()=>{
+  rows.innerHTML='';addRow();
+  ['cn','cp','bike'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('ds').value=0;
+  const b=document.getElementById('bn');b.value=String((parseInt(b.value)||0)+1).padStart(3,'0');calc();
+};
+document.getElementById('dt').valueAsDate=new Date();
+addRow();
+const $=id=>document.getElementById(id),use=n=>window.claude&&claude.use?claude.use(n):Promise.resolve(null);
+const money=n=>'Rs. '+n.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const say=t=>{$('msg').textContent=t};
+function data(){
+  const items=[...rows.querySelectorAll('tr')].map(tr=>({n:tr.querySelector('.n').value.trim(),q:parseFloat(tr.querySelector('.q').value)||0,r:parseFloat(tr.querySelector('.rt').value)||0})).filter(i=>i.n||i.r);
+  const sub=items.reduce((a,i)=>a+i.q*i.r,0),d=Math.min(parseFloat($('ds').value)||0,sub);
+  const dt=$('dt').value.split('-').reverse().join('-');
+  return{items,sub,d,tot:sub-d,cn:$('cn').value,cp:$('cp').value,bike:$('bike').value,bn:$('bn').value,dt,promo:document.querySelector('.promo').textContent.trim()};
+}
+function makePdf(b){
+  const p=new window.jspdf.jsPDF({unit:'mm',format:'a4'}),W=210;
+  p.setFillColor(15,92,74);p.rect(0,0,W,46,'F');
+  p.setTextColor(255);p.setFont('helvetica','bold');p.setFontSize(34);p.text('Bike Garage',14,20);
+  p.setFontSize(13);p.text('BEERU BIKE POINT',14,28);
+  p.setFont('helvetica','normal');p.setFontSize(9.5);
+  p.text(p.splitTextToSize('Gaute Wadi, Kachchi Road, Near Power House, Back Gate, Digha, Navi Mumbai 400708',170),14,34);
+  p.text('Phone: 1234567890',14,42);
+  p.setFillColor(245,183,0);p.rect(0,46,W,9,'F');p.setTextColor(20,32,43);p.setFont('helvetica','bold');p.setFontSize(9.5);
+  p.text(p.splitTextToSize(b.promo,W-28)[0],14,52);
+  p.setFont('helvetica','normal');p.setFontSize(10.5);
+  let y=66;
+  p.text('Customer: '+(b.cn||'-'),14,y);p.text('Bill no: '+b.bn,140,y);y+=6;
+  p.text('Phone: '+(b.cp||'-'),14,y);p.text('Date: '+b.dt,140,y);y+=6;
+  p.text('Bike / No.: '+(b.bike||'-'),14,y);y+=8;
+  const head=()=>{p.setFont('helvetica','bold');p.setFontSize(10);p.text('Item / service',14,y);p.text('Qty',130,y,{align:'right'});p.text('Rate',165,y,{align:'right'});p.text('Amount',196,y,{align:'right'});y+=2;p.setLineWidth(.5);p.line(14,y,196,y);y+=6;p.setFont('helvetica','normal');};
+  head();
+  b.items.forEach(i=>{
+    const L=p.splitTextToSize(i.n||'-',95),h=L.length*5+2;
+    if(y+h>270){p.addPage();y=20;head();}
+    p.text(L,14,y);p.text(String(i.q),130,y,{align:'right'});p.text(i.r.toFixed(2),165,y,{align:'right'});p.text((i.q*i.r).toFixed(2),196,y,{align:'right'});
+    y+=h;p.setDrawColor(200);p.setLineWidth(.2);p.line(14,y-3.5,196,y-3.5);
+  });
+  if(y>240){p.addPage();y=20;}
+  y+=4;p.setFontSize(10.5);
+  p.text('Subtotal',140,y);p.text(money(b.sub),196,y,{align:'right'});y+=6;
+  p.text('Discount',140,y);p.text('- '+money(b.d),196,y,{align:'right'});y+=3;
+  p.setDrawColor(20);p.setLineWidth(.5);p.line(140,y,196,y);y+=8;
+  p.setFont('helvetica','bold');p.setFontSize(14);p.text('Total',140,y);p.text(money(b.tot),196,y,{align:'right'});
+  p.setFont('helvetica','normal');p.setFontSize(9.5);p.setTextColor(90,104,116);
+  p.text('Thank you for choosing Bike Garage. Ride safe!',W/2,285,{align:'center'});
+  return p.output('blob');
+}
+function build(){
+  if(!window.jspdf){say('PDF tool did not load. Check your internet and reload.');return null}
+  const b=data();
+  if(!b.items.length){say('Add at least one item first.');return null}
+  return{b,blob:makePdf(b),name:'Bike-Garage-Bill-'+(b.bn||'001')+'.pdf'};
+}
+$('print').onclick=async()=>{
+  $('ready').hidden=false;say('');const r=build();if(!r)return;
+  say('PDF built. Saving bill...');$('ready').scrollIntoView({behavior:'smooth',block:'center'});
+  try{const o=await saveBill(r.b);say(o==='ok'?'Bill saved. Tap Download PDF or Share.':'PDF built, but the bill was not saved. Open this page signed in to claude.ai.')}catch(e){say('PDF built, but saving failed.')}
+};
+$('dl').onclick=async()=>{
+  const r=build();if(!r)return;
+  const d=await use('downloads');
+  if(!d){say('Download is not available in this view.');return}
+  try{await d.save({filename:r.name,data:r.blob});say('PDF saved.')}catch(e){if(!e||e.code!=='declined')say('Could not save the PDF.')}
+};
+$('sh').onclick=async()=>{
+  const r=build();if(!r)return;
+  const text='Bike Garage - BEERU BIKE POINT\nBill '+r.b.bn+' | '+r.b.dt+'\nTotal: '+money(r.b.tot)+'\nPhone: 1234567890';
+  try{
+    const f=new File([r.blob],r.name,{type:'application/pdf'});
+    if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:'Bike Garage bill',text});return}
+    if(navigator.share){await navigator.share({title:'Bike Garage bill',text});say('Shared the bill summary. Use Download PDF to attach the file.');return}
+  }catch(e){if(e&&e.name==='AbortError')return}
+  try{await navigator.clipboard.writeText(text);say('Bill summary copied. Paste it in WhatsApp and attach the PDF from Download PDF.')}
+  catch(e){window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank')}
+};
+
+/* ---- encrypted storage + admin ---- */
+const te=new TextEncoder(),td=new TextDecoder();
+const b64=u=>btoa(String.fromCharCode(...new Uint8Array(u))),ub=t=>Uint8Array.from(atob(t),c=>c.charCodeAt(0));
+async function derive(pw,salt){const m=await crypto.subtle.importKey('raw',te.encode(pw),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:200000,hash:'SHA-256'},m,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);}
+async function seal(k,o){const iv=crypto.getRandomValues(new Uint8Array(12));return{iv:b64(iv),ct:b64(await crypto.subtle.encrypt({name:'AES-GCM',iv},k,te.encode(JSON.stringify(o))))};}
+async function unseal(k,o){return JSON.parse(td.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:ub(o.iv)},k,ub(o.ct))));}
+let DBH=null,KEY=null,NEWPW=false,waiter=null,BILLS=[];
+const getDb=async()=>DBH||(DBH=await use('db'));
+const lm=t=>{$('lmsg').textContent=t};
+async function prepLock(){
+  const db=await getDb();if(!db){lm('Saving needs this page opened signed in to claude.ai.');return}
+  NEWPW=!(await db.doc('config/auth').get()).exists;
+  $('ltitle').textContent=NEWPW?'Create a password to protect your bills':'Enter password to continue';
+  $('lbtn').textContent=NEWPW?'Set password':'Unlock';$('lpw2').hidden=!NEWPW;
+}
+function ensureKey(){if(KEY)return Promise.resolve(KEY);$('lock').hidden=false;lm('');prepLock();return new Promise(r=>{waiter=r})}
+$('lbtn').onclick=async()=>{
+  const pw=$('lpw').value;
+  if(pw.length<6){lm('Use at least 6 characters.');return}
+  const db=await getDb();if(!db){lm('Open this page signed in to claude.ai.');return}
+  lm('Checking...');
+  try{
+    const ref=db.doc('config/auth'),s0=await ref.get();
+    if(!s0.exists){
+      if(pw!==$('lpw2').value){lm('Passwords do not match.');return}
+      const salt=crypto.getRandomValues(new Uint8Array(16)),k=await derive(pw,salt);
+      await ref.set({salt:b64(salt),check:await seal(k,'ok')});KEY=k;
+    }else{
+      const d=s0.data(),k=await derive(pw,ub(d.salt));
+      try{await unseal(k,d.check)}catch(e){lm('Wrong password.');return}
+      KEY=k;
+    }
+    $('lpw').value='';$('lpw2').value='';$('lock').hidden=true;lm('');
+    if(waiter){waiter(KEY);waiter=null}
+  }catch(e){lm('Could not reach saved data. Open this page signed in to claude.ai.')}
+};
+async function saveBill(b){
+  const db=await getDb();if(!db)return'nodb';
+  const k=await ensureKey();
+  await db.collection('bills').doc('b'+(b.bn||'x').replace(/[^\w-]/g,'')).set({ts:Date.now(),...await seal(k,b)});
+  return'ok';
+}
+function show(v){$('bm').hidden=v==='admin';$('adm').hidden=v!=='admin';if(v==='admin')openAdmin()}
+addEventListener('hashchange',()=>show(location.hash==='#admin'?'admin':'bill'));
+$('toadmin').onclick=e=>{e.preventDefault();show('admin')};
+$('back').onclick=()=>{if(location.hash)history.replaceState(null,'',location.pathname+location.search);show('bill')};
+$('relock').onclick=()=>{KEY=null;BILLS=[];$('alist').innerHTML='';$('acount').textContent='0 bills';$('atotal').textContent=fmt(0);$('astat').textContent='Locked.';show('bill')};
+async function openAdmin(){
+  $('astat').textContent='';
+  const db=await getDb();
+  if(!db){$('astat').textContent='Admin needs this page opened signed in to claude.ai.';return}
+  await ensureKey();
+  $('astat').textContent='Loading bills...';
+  const snap=await db.collection('bills').orderBy('ts','desc').limit(500).get();
+  BILLS=[];
+  for(const d of snap.docs){try{const x=d.data();BILLS.push({id:d.id,ts:x.ts,...await unseal(KEY,x)})}catch(e){}}
+  $('astat').textContent=BILLS.length?'':'No saved bills yet. Bills are saved when you tap Print bill (PDF).';
+  renderAdmin();
+}
+function renderAdmin(){
+  const q=$('aq').value.toLowerCase(),L=$('alist');L.innerHTML='';let t=0,n=0;
+  BILLS.filter(b=>[b.cn,b.cp,b.bike,b.bn].join(' ').toLowerCase().includes(q)).forEach(b=>{
+    n++;t+=b.tot;const tr=document.createElement('tr');
+    [b.dt,b.bn,[b.cn,b.cp].filter(Boolean).join(' '),b.bike,fmt(b.tot)].forEach((v,i)=>{const td=document.createElement('td');td.textContent=v||'-';if(i===4)td.className='amt';tr.appendChild(td)});
+    const a=document.createElement('td'),p=document.createElement('button'),x=document.createElement('button');
+    p.textContent='PDF';p.className='alt';x.textContent='Delete';x.className='alt';
+    p.onclick=async()=>{const d=await use('downloads');if(!d){$('astat').textContent='Download is not available in this view.';return}try{await d.save({filename:'Bike-Garage-Bill-'+b.bn+'.pdf',data:makePdf(b)})}catch(e){}};
+    x.onclick=async()=>{if(x.textContent==='Delete'){x.textContent='Sure?';setTimeout(()=>{x.textContent='Delete'},3000);return}try{await DBH.doc('bills/'+b.id).delete();BILLS=BILLS.filter(z=>z.id!==b.id);renderAdmin()}catch(e){$('astat').textContent='Could not delete.'}};
+    a.append(p,x);tr.appendChild(a);L.appendChild(tr);
+  });
+  $('acount').textContent=n+(n===1?' bill':' bills');$('atotal').textContent=fmt(t);
+}
+$('aq').oninput=renderAdmin;
+$('csv').onclick=async()=>{
+  if(!BILLS.length){$('astat').textContent='Nothing to export yet.';return}
+  const d=await use('downloads');if(!d){$('astat').textContent='Download is not available in this view.';return}
+  const e=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+  const rowsC=[['Bill no','Date','Customer','Phone','Bike','Items','Subtotal','Discount','Total']].concat(BILLS.map(b=>[b.bn,b.dt,b.cn,b.cp,b.bike,b.items.map(i=>i.n+' x'+i.q+' @'+i.r).join('; '),b.sub,b.d,b.tot]));
+  try{await d.save({filename:'bike-garage-bills.csv',data:rowsC.map(r=>r.map(e).join(',')).join('\n')})}catch(x){}
+};
+if(location.hash==='#admin')show('admin');
+</script>
+</body>
+</html>
